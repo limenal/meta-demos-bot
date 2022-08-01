@@ -15,11 +15,10 @@ const { mainOptionsRU,
 }  = require('./options')
 const request = require('request');
 const convert = require('xml-js');
-const CoinGecko = require('coingecko-api');
+
 const token = '5532169318:AAHogZXzbLy6r6adccvNJKcwmRFV_T3r7X4'
 
 const bot = new TelegramBot(token, {polling: true})
-const CoinGeckoClient = new CoinGecko();
 
 const tokenMsg = [
     'Выберите токен',
@@ -49,7 +48,6 @@ const chains = ['eth', 'binance', 'tron', 'polygon']
 const lang = {}
 const userToken = {}
 const userChain = {}
-const userAmountNative = {}
 const users = {}
 async function getTokenUSDPrice (tokenSymbol) {
     const url = `https://api.coingecko.com/api/v3/coins/${tokenSymbol}?localization=true`
@@ -97,11 +95,11 @@ async function getRubPrice() {
 }
 
 async function save (userData) {
-    
+
 }
 
 async function main () {
-    
+
     bot.setMyCommands([
         {command: '/start', description: 'Main function'},
     ])
