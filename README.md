@@ -7,5 +7,7 @@ npm >= 8.11.0
 ```
 npm install
 
+```
 ## Run bot
+```
 node index.js 
