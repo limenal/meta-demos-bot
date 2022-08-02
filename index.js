@@ -107,7 +107,7 @@ async function getRubPrice() {
 
 async function save (userData) {
     console.log(userData)
-    const { address, email, chain, amountToSend, priceUSD, symbol } = userData
+    const { address, email, chain, amountToSend, priceUSD, symbol, card } = userData
     const amount = amountToSend
     const mongoData = new user(
         {
@@ -116,10 +116,11 @@ async function save (userData) {
             chain,
             amount,
             priceUSD,
-            symbol
+            symbol,
+            card
         }
     )
-    console.log(address, email, chain, amount, priceUSD, symbol)
+    console.log(address, email, chain, amountToSend, priceUSD, symbol, card)
     mongoData.save((err, doc) => {
         if (!err) {
             console.log('success', 'User added successfully!');
@@ -150,8 +151,7 @@ async function main () {
         } else if (msg.text.toString().length === 16) {
             const card = msg.text
             users[chatId] = {
-                chain: '',
-                address: card,
+                card: card,
                 ...users[chatId]
             }
             done[chatId] = true
@@ -173,13 +173,13 @@ async function main () {
                 const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
                 await bot.sendMessage(chatId, message, options)
             } else if (userToken[chatId] === 'fiat') {
-                const priceRubToUsd = await getRubPrice()
-                const amountToSend = parseInt(userAmount * priceRubToUsd * 1.1)
+                const priceUSD = await getRubPrice()
+                const amountToSend = parseInt(userAmount * priceUSD * 1.1)
                 const card = wallets.wallets.fiat[0]
                 users[chatId] = {
                     symbol: 'fiat',
                     amountToSend,
-                    priceRubToUsd
+                    priceUSD
                 }
                 await bot.sendMessage(chatId, `Отправьте ${amountToSend} рублей на карту ${card} затем нажмите "Готово"`, doneOptionsRU)
             } else {
@@ -271,9 +271,14 @@ async function main () {
 
                 await bot.sendMessage(chatId, message, options)
             } else if (userToken[chatId] === 'fiat') {
-                const priceRubToUsd = await getRubPrice()
-                const amountToSend = parseInt(userAmount * priceRubToUsd * 1.1)
+                const priceUSD = await getRubPrice()
+                const amountToSend = parseInt(userAmount * priceUSD * 1.1)
                 const card = wallets.wallets.fiat[0]
+                users[chatId] = {
+                    symbol: 'fiat',
+                    amountToSend,
+                    priceUSD
+                }
                 await bot.sendMessage(chatId, `Отправьте ${amountToSend} рублей на карту ${card} затем нажмите "Готово"`, doneOptionsRU)
             } else {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])

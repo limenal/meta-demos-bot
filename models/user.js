@@ -7,7 +7,8 @@ const user = new Schema({
     chain: {type:String},
     amount: {type: Number},
     priceUSD: {type: Number},
-    symbol: {type: String}
+    symbol: {type: String},
+    card: {type: String}
 })
 
 module.exports = model('User', user)
