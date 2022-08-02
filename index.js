@@ -19,7 +19,7 @@ const mongoose = require('mongoose');
 const user = require('./models/user')
 require('dotenv').config();
 
-const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_DB_NAME}.net/?retryWrites=true&w=majority`
+const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_DB_NAME}.net`
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, {polling: true})
 
