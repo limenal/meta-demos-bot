@@ -154,9 +154,9 @@ async function main () {
                 address: card,
                 ...users[chatId]
             }
-            emailInput[chatId] = true
-            done[chatId] = false
-            await bot.sendMessage(chatId, 'Спасибо! Перевод будет проверен. После проверки, Ваш кошелек появится в Whitelist в течение 24 часов. Оставьте ваш email для связи и решения возможных проблем')
+            done[chatId] = true
+            const message = `Укажите ваш кошелек для занесения его в Whitelist и зачисления токенов $MEDOS`
+            await bot.sendMessage(chatId, message)    
 
         } else if (Number(msg.text) > 0 && userToken[chatId] && userChain[chatId] && !msg.text.toString().includes('0x')) {
             const userAmount = Number(msg.text)
@@ -302,10 +302,10 @@ async function main () {
             await bot.sendMessage(chatId, amountMsg[lang[chatId]], amountOptions)
         }
         if (data === 'done') {
-            done[chatId] = true
             if (userToken[chatId] === 'fiat') {
-                await bot.sendMessage(chatId, 'Укажите ваш кошелек для занесения его в Whitelist и зачисления токенов $MEDOS')
+                await bot.sendMessage(chatId, 'Укажите номер карты для проверки перевода')
             } else {
+                done[chatId] = true
                 const msg = lang[chatId] ? `Insert your ${userChain[chatId].toUpperCase()} wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ${userChain[chatId].toUpperCase()} для занесения его в Whitelist и зачисления токенов $MEDOS`
                 await bot.sendMessage(chatId, msg)    
             }
