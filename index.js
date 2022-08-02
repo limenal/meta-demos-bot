@@ -61,7 +61,8 @@ async function getTokenUSDPrice (tokenSymbol) {
             encoding: 'utf-8'
         }, function (error, response, body) {
             const json = JSON.parse(body)
-            const price = json.market_data.current_price.usd
+            const price = 1/json.market_data.current_price.usd
+            console.log(price)
             const symbol = json.symbol
             const result = [price, symbol]
             resolve(result)
@@ -181,7 +182,7 @@ async function main () {
             const userAmount = data
             if (userChain[chatId] === 'btc') {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
-                const amountToSend = (1/priceUSD * data).toFixed(6)
+                const amountToSend = (priceUSD * data).toFixed(6)
                 const address = wallets.wallets.btc[0]
                 await bot.sendMessage(chatId, `Send ${Number(amountToSend)} ${symbol} on address ${address} then click "Done"`, doneOptionsEN)
             } else if (userToken[chatId] === 'fiat') {
@@ -220,7 +221,7 @@ async function main () {
             bot.onReplyToMessage(chatId, hashPrompt.message_id, async (msg) => {
                 const hash = msg.text
                 const newUsersData = {
-                    chain: userChain,
+                    chain: userChain[chatId],
                     hash,
                     ...users[chatId]
                 }
