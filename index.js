@@ -1,22 +1,27 @@
 const TelegramBot = require('node-telegram-bot-api')
 const wallets = require('./wallets')
-const { mainOptionsRU, 
-    mainOptionsEN, 
-    privateRoundOptionsEN, 
-    privateRoundOptionsRU, 
-    amountOptions, 
-    tokenOptionsRU, 
-    tokenOptionsEN, 
-    chainOptions, 
-    languageOptions, 
+const { mainOptionsRU,
+    mainOptionsEN,
+    privateRoundOptionsEN,
+    privateRoundOptionsRU,
+    amountOptions,
+    tokenOptionsRU,
+    tokenOptionsEN,
+    chainOptions,
+    languageOptions,
     doneOptionsRU,
     doneOptionsEN,
     againOptions
 }  = require('./options')
 const request = require('request');
 const convert = require('xml-js');
+const mongoose = require('mongoose');
+const user = require('./models/user')
+require('dotenv').config();
 
-const token = '5532169318:AAHogZXzbLy6r6adccvNJKcwmRFV_T3r7X4'
+const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_DB_NAME}.net/?retryWrites=true&w=majority`
+
+const token = process.env.BOT_TOKEN
 
 const bot = new TelegramBot(token, {polling: true})
 
@@ -95,11 +100,36 @@ async function getRubPrice() {
 }
 
 async function save (userData) {
-
+    console.log(userData)
+    const { hash, amountToSend, priceUSD, symbol } = userData
+    console.log(hash, amountToSend, priceUSD, symbol)
+    const amount = amountToSend
+    const mongoData = new user(
+        {
+            hash,
+            amount,
+            priceUSD,
+            symbol
+        }
+    )
+    mongoData.save((err, doc) => {
+        if (!err) {
+            console.log('success', 'User added successfully!');
+        } else {
+            console.log('Error during record insertion : ' + err);
+        }
+    });
 }
 
 async function main () {
 
+    mongoose
+        .connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+        .then((res) => {
+            console.log('Connected db')
+        })
+        .catch((error) => console.log(error));
+    
     bot.setMyCommands([
         {command: '/start', description: 'Main function'},
     ])
@@ -114,7 +144,7 @@ async function main () {
     bot.onText (/\/saymyname (.+)/, (msg, match) => {
         let name = match [1];
         bot.sendMessage (msg.chat.id, `Hello ${name}!`);   //pay attention to the type of quotes
-  })
+    })
     bot.on('callback_query', async (msg) => {
         const data = msg.data
         const chatId = msg.message.chat.id
@@ -191,17 +221,16 @@ async function main () {
             })
             bot.onReplyToMessage(chatId, hashPrompt.message_id, async (msg) => {
                 const hash = msg.text
-                console.log(hash)
-                console.log(users[chatId])
                 const newUsersData = {
+                    chain: userChain,
                     hash,
                     ...users[chatId]
                 }
                 await save(newUsersData)
-                await bot.sendMessage(chatId, `Done ✅`, againOptions)
+                await bot.sendMessage(chatId, `Your wallet will be included in Whitelist within 24 hours`, againOptions)
             });
             // await bot.sendMessage(chatId, 'Enter an transaction hash:', againOptions)
-             
+
         }
     })
 
