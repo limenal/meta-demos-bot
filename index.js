@@ -62,19 +62,24 @@ const emailInput = {}
 
 async function getTokenUSDPrice (tokenSymbol) {
     const url = `https://api.coingecko.com/api/v3/coins/${tokenSymbol}?localization=true`
-    return new Promise((resolve, reject) => {
-        request({
-            uri: url,
-            method: 'GET',
-            encoding: 'utf-8'
-        }, function (error, response, body) {
-            const json = JSON.parse(body)
-            const price = json.market_data.current_price.usd
-            const symbol = json.symbol
-            const result = [price, symbol]
-            resolve(result)
+    try {
+        return new Promise((resolve, reject) => {
+            request({
+                uri: url,
+                method: 'GET',
+                encoding: 'utf-8'
+            }, function (error, response, body) {
+                const json = JSON.parse(body)
+                const price = json.market_data.current_price.usd
+                const symbol = json.symbol
+                const result = [price, symbol]
+                resolve(result)
+            })
         })
-    })
+    } catch (err) {
+        console.log(err)
+    }
+
 }
 
 async function getRubPrice() {
@@ -264,7 +269,7 @@ async function main () {
             const userAmount = data
             if (userChain[chatId] === 'btc') {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
-                const amountToSend = (priceUSD * data).toFixed(6)
+                const amountToSend = (1/priceUSD * data).toFixed(6)
                 const address = wallets.wallets.btc[0]
                 const message = lang[chatId] ? `Send ${Number(amountToSend)} ${symbol} on address ${address} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${address}, затем кликните "Готово"`
                 const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
@@ -282,7 +287,7 @@ async function main () {
                 await bot.sendMessage(chatId, `Отправьте ${amountToSend} рублей на карту ${card} затем нажмите "Готово"`, doneOptionsRU)
             } else {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
-                let amountToSend = (priceUSD * data).toFixed(6)
+                let amountToSend = (1/priceUSD * data).toFixed(6)
                 if (['usd-coin', 'dai', 'tether', 'busd'].includes(userToken[chatId])) {
                     amountToSend = amountToSend < Number(data) ? data : Number(amountToSend).toFixed(2)
                 }
