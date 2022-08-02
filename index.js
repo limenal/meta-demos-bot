@@ -222,7 +222,7 @@ async function main () {
                 const hash = msg.text
                 const newUsersData = {
                     chain: userChain[chatId],
-                    hash,
+                    hash: hash,
                     ...users[chatId]
                 }
                 await save(newUsersData)
