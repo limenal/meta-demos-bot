@@ -21,9 +21,7 @@ require('dotenv').config();
 
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_DB_NAME}.net/?retryWrites=true&w=majority`
 
-const token = process.env.BOT_TOKEN
-
-const bot = new TelegramBot(token, {polling: true})
+const bot = new TelegramBot(process.env.BOT_TOKEN, {polling: true})
 
 const tokenMsg = [
     'Выберите токен',
