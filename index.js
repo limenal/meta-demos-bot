@@ -11,7 +11,8 @@ const { mainOptionsRU,
     languageOptions,
     doneOptionsRU,
     doneOptionsEN,
-    againOptions
+    againOptionsRU,
+    againOptionsEN
 }  = require('./options')
 const request = require('request');
 const convert = require('xml-js');
@@ -29,8 +30,8 @@ const tokenMsg = [
 ]
 
 const amountMsg = [
-    'Выберите сумму',
-    'Choose amount'
+    'Выберите сумму или введите вручную',
+    'Choose amount or input manually'
 ]
 
 const chainMsg = [
@@ -43,6 +44,10 @@ const helloMsg = [
     'Choose the desired option'
 ]
 
+const errMsg = [
+    'Введите число',
+    'Enter a number'
+]
 const tokens = ['ethereum', 'tether', 'usd-coin', 'dai', 'busd', 'bitcoin']
 const chains = ['eth', 'binance', 'tron', 'polygon']
 // async function startDeposit(chatId) {
@@ -52,6 +57,9 @@ const lang = {}
 const userToken = {}
 const userChain = {}
 const users = {}
+const done = {}
+const emailInput = {}
+
 async function getTokenUSDPrice (tokenSymbol) {
     const url = `https://api.coingecko.com/api/v3/coins/${tokenSymbol}?localization=true`
     return new Promise((resolve, reject) => {
@@ -61,8 +69,7 @@ async function getTokenUSDPrice (tokenSymbol) {
             encoding: 'utf-8'
         }, function (error, response, body) {
             const json = JSON.parse(body)
-            const price = 1/json.market_data.current_price.usd
-            console.log(price)
+            const price = json.market_data.current_price.usd
             const symbol = json.symbol
             const result = [price, symbol]
             resolve(result)
@@ -100,17 +107,19 @@ async function getRubPrice() {
 
 async function save (userData) {
     console.log(userData)
-    const { hash, amountToSend, priceUSD, symbol } = userData
-    console.log(hash, amountToSend, priceUSD, symbol)
+    const { address, email, chain, amountToSend, priceUSD, symbol } = userData
     const amount = amountToSend
     const mongoData = new user(
         {
-            hash,
+            address,
+            email,
+            chain,
             amount,
             priceUSD,
             symbol
         }
     )
+    console.log(address, email, chain, amount, priceUSD, symbol)
     mongoData.save((err, doc) => {
         if (!err) {
             console.log('success', 'User added successfully!');
@@ -138,12 +147,84 @@ async function main () {
         const chatId = msg.chat.id
         if (text === '/start') {
             await bot.sendMessage(chatId, `Choose language / Выберите язык`, languageOptions)
+        } else if (msg.text.toString().length === 16) {
+            const card = msg.text
+            users[chatId] = {
+                chain: '',
+                address: card,
+                ...users[chatId]
+            }
+            emailInput[chatId] = true
+            done[chatId] = false
+            await bot.sendMessage(chatId, 'Спасибо! Перевод будет проверен. После проверки, Ваш кошелек появится в Whitelist в течение 24 часов. Оставьте ваш email для связи и решения возможных проблем')
+
+        } else if (Number(msg.text) > 0 && userToken[chatId] && userChain[chatId] && !msg.text.toString().includes('0x')) {
+            const userAmount = Number(msg.text)
+            if (userChain[chatId] === 'btc') {
+                const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
+                const amountToSend = (1/priceUSD * userAmount).toFixed(6)
+                const address = wallets.wallets.btc[0]
+                users[chatId] = {
+                    amountToSend,
+                    priceUSD,
+                    symbol
+                }
+                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${symbol} on address ${address} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${address}, затем кликните "Готово"`
+                const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
+                await bot.sendMessage(chatId, message, options)
+            } else if (userToken[chatId] === 'fiat') {
+                const priceRubToUsd = await getRubPrice()
+                const amountToSend = parseInt(userAmount * priceRubToUsd * 1.1)
+                const card = wallets.wallets.fiat[0]
+                users[chatId] = {
+                    symbol: 'fiat',
+                    amountToSend,
+                    priceRubToUsd
+                }
+                await bot.sendMessage(chatId, `Отправьте ${amountToSend} рублей на карту ${card} затем нажмите "Готово"`, doneOptionsRU)
+            } else {
+                const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
+                let amountToSend = (1/priceUSD * userAmount).toFixed(6)
+                if (['usd-coin', 'dai', 'tether', 'busd'].includes(userToken[chatId])) {
+                    amountToSend = amountToSend < userAmount ? userAmount : Number(amountToSend).toFixed(2)
+                }
+                users[chatId] = {
+                    amountToSend,
+                    priceUSD,
+                    symbol
+                }
+                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${symbol} on address ${wallets.wallets[userChain[chatId]][0]} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${wallets.wallets[userChain[chatId]][0]}, затем кликните "Готово"`
+                const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
+                await bot.sendMessage(chatId, message, options)
+            }
+        } else if (done[chatId]) {
+            const address = msg.text
+            users[chatId] = {
+                chain: userChain[chatId],
+                address: address,
+                ...users[chatId]
+            }
+            emailInput[chatId] = true
+            done[chatId] = false
+            const message = lang[chatId] ? `Your wallet will be included in Whitelist within 24 hours. Insert your email (just in case)` : `Спасибо! Перевод будет проверен. После проверки, Ваш кошелек появится в Whitelist в течение 24 часов. Оставьте ваш email для связи и решения возможных проблем`
+            await bot.sendMessage(chatId, message)
+        } else if (emailInput[chatId]) {
+            const email = msg.text
+            const newUserData = {
+                email,
+                ...users[chatId]
+            }
+            await save(newUserData)
+            const message = lang[chatId] ? `Make sure you subscribed to our Telegram channel so you don't miss any breaking news: https://t.me/metademos_news` : `Убедитесь, что подписаны на наш Telegram канал, чтобы не пропустить срочные новости https://t.me/MetaDemosFun`
+            const options = lang[chatId] ? againOptionsEN : againOptionsRU
+            await bot.sendMessage(chatId, message, options)
+        } else {
+            console.log(userToken[chatId], userChain[chatId])
+            const msg = lang[chatId] ? errMsg[lang[chatId]] : errMsg[1]
+            await bot.sendMessage(chatId, msg, languageOptions)
         }
     });
-    bot.onText (/\/saymyname (.+)/, (msg, match) => {
-        let name = match [1];
-        bot.sendMessage (msg.chat.id, `Hello ${name}!`);   //pay attention to the type of quotes
-    })
+
     bot.on('callback_query', async (msg) => {
         const data = msg.data
         const chatId = msg.message.chat.id
@@ -151,6 +232,7 @@ async function main () {
             userToken[chatId] = ''
             userChain[chatId] = ''
             users[chatId] = {}
+            done[chatId] = false
             const options = lang[chatId] ? mainOptionsEN : mainOptionsRU
             await bot.sendMessage(chatId, helloMsg[lang[chatId]], options)
         }
@@ -184,24 +266,30 @@ async function main () {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
                 const amountToSend = (priceUSD * data).toFixed(6)
                 const address = wallets.wallets.btc[0]
-                await bot.sendMessage(chatId, `Send ${Number(amountToSend)} ${symbol} on address ${address} then click "Done"`, doneOptionsEN)
+                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${symbol} on address ${address} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${address}, затем кликните "Готово"`
+                const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
+
+                await bot.sendMessage(chatId, message, options)
             } else if (userToken[chatId] === 'fiat') {
                 const priceRubToUsd = await getRubPrice()
-                const amountToSend = parseInt(userAmount * priceRubToUsd)
+                const amountToSend = parseInt(userAmount * priceRubToUsd * 1.1)
                 const card = wallets.wallets.fiat[0]
-                await bot.sendMessage(chatId, `Отправьте ${amountToSend} рублей на карту ${card} затем нажмите "Оплатил"`, doneOptionsRU)
+                await bot.sendMessage(chatId, `Отправьте ${amountToSend} рублей на карту ${card} затем нажмите "Готово"`, doneOptionsRU)
             } else {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
                 let amountToSend = (priceUSD * data).toFixed(6)
-                if (['usd-coin', 'dai', 'tether', 'busd'].includes(userToken[chatId]) && amountToSend < data) {
-                    amountToSend = data
+                if (['usd-coin', 'dai', 'tether', 'busd'].includes(userToken[chatId])) {
+                    amountToSend = amountToSend < Number(data) ? data : Number(amountToSend).toFixed(2)
                 }
                 users[chatId] = {
                     amountToSend,
                     priceUSD,
                     symbol
                 }
-                await bot.sendMessage(chatId, `Send ${Number(amountToSend)} ${symbol} on address ${wallets.wallets[userChain[chatId]][0]} then click "Done"`, doneOptionsEN)
+                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${symbol} on address ${wallets.wallets[userChain[chatId]][0]} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${wallets.wallets[userChain[chatId]][0]}, затем кликните "Готово"`
+                const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
+
+                await bot.sendMessage(chatId, message, options)
             }
         }
         if(chains.includes(data)) {
@@ -209,27 +297,18 @@ async function main () {
             await bot.sendMessage(chatId, amountMsg[lang[chatId]], amountOptions)
         }
         if (data === 'fiat') {
+            userChain[chatId] = data
             userToken[chatId] = data
             await bot.sendMessage(chatId, amountMsg[lang[chatId]], amountOptions)
         }
         if (data === 'done') {
-            const hashPrompt = await bot.sendMessage(chatId, `Send an transaction hash`, {
-                reply_markup: {
-                    force_reply: true,
-                },
-            })
-            bot.onReplyToMessage(chatId, hashPrompt.message_id, async (msg) => {
-                const hash = msg.text
-                const newUsersData = {
-                    chain: userChain[chatId],
-                    hash: hash,
-                    ...users[chatId]
-                }
-                await save(newUsersData)
-                await bot.sendMessage(chatId, `Your wallet will be included in Whitelist within 24 hours`, againOptions)
-            });
-            // await bot.sendMessage(chatId, 'Enter an transaction hash:', againOptions)
-
+            done[chatId] = true
+            if (userToken[chatId] === 'fiat') {
+                await bot.sendMessage(chatId, 'Укажите ваш кошелек для занесения его в Whitelist и зачисления токенов $MEDOS')
+            } else {
+                const msg = lang[chatId] ? `Insert your ${userChain[chatId].toUpperCase()} wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ${userChain[chatId].toUpperCase()} для занесения его в Whitelist и зачисления токенов $MEDOS`
+                await bot.sendMessage(chatId, msg)    
+            }
         }
     })
 

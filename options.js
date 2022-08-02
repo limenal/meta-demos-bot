@@ -83,14 +83,14 @@ module.exports = {
     languageOptions: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                [{text: 'English', callback_data: 'en'}, {text: 'Русский', callback_data: 'ru'}]
+                [{text: '🇬🇧', callback_data: 'en'}, {text: '🇷🇺', callback_data: 'ru'}]
             ]
         })
     },
     doneOptionsRU: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                [{text: ' Оплатил✅ ', callback_data: 'done'}]
+                [{text: ' Готово ✅ ', callback_data: 'done'}]
             ]
         })
     },
@@ -101,13 +101,18 @@ module.exports = {
             ]
         })
     },
-    againOptions: {
+    againOptionsRU: {
+        reply_markup: JSON.stringify({
+            inline_keyboard: [
+                [{text: 'В главное меню', callback_data: 'start_again'}]
+            ]
+        })
+    },
+    againOptionsEN: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
                 [{text: 'Go to main menu', callback_data: 'start_again'}]
             ]
         })
-    },
-    
-
+    }
 }
