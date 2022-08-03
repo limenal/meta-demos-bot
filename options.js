@@ -2,8 +2,8 @@ module.exports = {
     mainOptionsRU: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                [{text: '💰 Private Round', callback_data: 'private_round'}],
-                [{text: '🌐 Website', callback_data: 'website'}],
+                [{text: '💰 Участвовать в приватном раунде', callback_data: 'private_round'}],
+                [{text: '🌐 Сайт', callback_data: 'website'}],
                 [{text: '🗒 Whitelist', callback_data: 'whitelist'}],
                 [{text: '❓ Задать вопрос', callback_data: 'support'}]
             ]
@@ -83,7 +83,7 @@ module.exports = {
     languageOptions: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                [{text: '🇬🇧', callback_data: 'en'}, {text: '🇷🇺', callback_data: 'ru'}]
+                [{text: '🇬🇧 English', callback_data: 'en'}, {text: '🇷🇺 Русский', callback_data: 'ru'}]
             ]
         })
     },

@@ -153,7 +153,7 @@ async function main () {
         const chatId = msg.chat.id
         if (text === '/start') {
             await bot.sendMessage(chatId, `Choose language / Выберите язык`, languageOptions)
-        } else if (msg.text.toString().length === 16) {
+        } else if (msg.text.toString().replace(/\s/g, '').length === 16) {
             const card = msg.text
             users[chatId] = {
                 card: card,
@@ -248,7 +248,8 @@ async function main () {
         }
         if (data === 'private_round') {
             const options = lang[chatId] ? privateRoundOptionsEN : privateRoundOptionsRU
-            await bot.sendMessage(chatId, 'Private round', options)
+            const message = lang[chatId] ? 'Private round' :'Участвовать в приватном раунде продажи токенов'
+            await bot.sendMessage(chatId, message, options)
         }
         if (data === 'buy') {
             const options = lang[chatId] ? tokenOptionsEN : tokenOptionsRU
@@ -313,7 +314,7 @@ async function main () {
         }
         if (data === 'done') {
             if (userToken[chatId] === 'fiat') {
-                await bot.sendMessage(chatId, 'Укажите номер карты для проверки перевода')
+                await bot.sendMessage(chatId, 'Укажите номер вашей карты для проверки перевода')
             } else {
                 done[chatId] = true
                 const msg = lang[chatId] ? `Insert your ${userChain[chatId].toUpperCase()} wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ${userChain[chatId].toUpperCase()} для занесения его в Whitelist и зачисления токенов $MEDOS`
