@@ -272,6 +272,11 @@ async function main () {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
                 const amountToSend = (1/priceUSD * data).toFixed(6)
                 const address = wallets.wallets.btc[0]
+                users[chatId] = {
+                    amountToSend,
+                    priceUSD,
+                    symbol
+                }
                 const message = lang[chatId] ? `Send ${Number(amountToSend)} ${symbol} on address ${address} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${address}, затем кликните "Готово"`
                 const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
 
