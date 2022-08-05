@@ -205,7 +205,7 @@ async function main () {
             } else {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
                 let amountToSend = (1/priceUSD * userAmount).toFixed(6)
-                if (['usd-coin', 'dai', 'tether', 'busd'].includes(userToken[chatId])) {
+                if (['usd-coin', 'dai', 'tether', 'binance-usd'].includes(userToken[chatId])) {
                     amountToSend = amountToSend < userAmount ? userAmount : Number(amountToSend).toFixed(2)
                 }
                 users[chatId] = {
@@ -283,11 +283,25 @@ async function main () {
             await bot.sendMessage(chatId, helloMsg[lang[chatId]], options)
         }
         if (data === 'private_round') {
+            userToken[chatId] = ''
+            userChain[chatId] = ''
+            users[chatId] = {}
+            done[chatId] = false
+            emailInput[chatId] = null
+            checkUser[chatId] = null
+            stage[chatId] = null
             const options = lang[chatId] ? privateRoundOptionsEN : privateRoundOptionsRU
             const message = lang[chatId] ? 'Participate in a private token sale round' :'Участвовать в приватном раунде продажи токенов'
             await bot.sendMessage(chatId, message, options)
         }
         if (data === 'buy') {
+            userToken[chatId] = ''
+            userChain[chatId] = ''
+            users[chatId] = {}
+            done[chatId] = false
+            emailInput[chatId] = null
+            checkUser[chatId] = null
+            stage[chatId] = null
             const options = lang[chatId] ? tokenOptionsEN : tokenOptionsRU
             await bot.sendMessage(chatId, tokenMsg[lang[chatId]], options)
         }
@@ -333,7 +347,7 @@ async function main () {
             } else {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
                 let amountToSend = (1/priceUSD * data).toFixed(6)
-                if (['usd-coin', 'dai', 'tether', 'busd'].includes(userToken[chatId])) {
+                if (['usd-coin', 'dai', 'tether', 'binance-usd'].includes(userToken[chatId])) {
                     amountToSend = amountToSend < Number(data) ? data : Number(amountToSend).toFixed(2)
                 }
                 users[chatId] = {
