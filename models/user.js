@@ -6,6 +6,7 @@ const user = new Schema({
     email: {type:String},
     chain: {type:String},
     amount: {type: Number},
+    amountUSD: {type: Number},
     priceUSD: {type: Number},
     symbol: {type: String},
     card: {type: String}
