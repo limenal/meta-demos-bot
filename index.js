@@ -12,12 +12,20 @@ const { mainOptionsRU,
     doneOptionsRU,
     doneOptionsEN,
     againOptionsRU,
-    againOptionsEN
+    againOptionsEN,
+    whiteListOptionsEN,
+    whiteListOptionsRU,
+    checkUserOptionsEN,
+    checkUserOptionsRU,
+    detailsOptionsEN,
+    detailsOptionsRU,
+    amountOptionsEN,
+    amountOptionsRU
 }  = require('./options')
 const request = require('request');
 const convert = require('xml-js');
 const mongoose = require('mongoose');
-const user = require('./models/user')
+const user = require('./models/user');
 require('dotenv').config();
 
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_DB_NAME}.net`
@@ -40,8 +48,13 @@ const chainMsg = [
 ]
 
 const helloMsg = [
-    'Выберите нужную опцию',
-    'Choose the desired option'
+    `Привет! Я бот NFT GameFi проекта Meta Demos.🤖\n🤞Ты нашел меня и это не случайно! Здесь мы проводим Private Round: продажа токенов проекта по цене ниже TGE\n🔥Количество мест ограничено, поэтому не будем терять время! Ты с нами? ⏰`,
+    `Hey, I'm the bot of Meta Demos project.🤖\n🤞You found me, and it's no accident! Here we are holding a Private Round: project token SALE below TGE\n🔥Places are limited, so let's not waste any time! Are you in? ⏰`
+]
+
+const detailsMsg = [
+    `❗️Хорошая традиция в индустрии — ранние инвесторы получают самую выгодную цену при покупке токена до листинга: сейчас цена на 40% ниже предстоящего IDO и гораздо ниже TGE.\nПродать токен на бирже, зафиксировав прибыль или оставить на будущее, ожидая иксов, — ваше личное дело.\n⌛ Количество мест:\n50$ — 500 человек\n100$ — 100 человек\n500$ — 25 человек\n1000$ — 10 человек\nПроведя покупку, адрес вашего кошелька появится в Whitelist. Токены MEDOS будут поступать на него сразу после листинга.\n1 Medos = $ 0,012\n10% TGE, 1 месяц cliff, ежедневный vesting в течение года.\n📲 Не забывайте вступать в наши соцсети, чтобы следить за новостями`,
+    `❗️The wonderful tradition in the industry says that early investors get the best price when buying tokens before listing: the price is now 40% lower than the upcoming IDO and far below the TGE.\nSelling the token on the exchange to lock in a profit or leave tokens for the future, awaiting profit multiplication is entirely up to you!\n⌛ Capacity:\n$50 - 500 people\n$100 - 100 people\n$500 - 25 people\n$1,000 - 10 people\nAfter the purchase, your wallet address will appear on Whitelist. MEDOS tokens will go to the wallet immediately after listing.\n1 Medos = $ 0,012\n10% TGE, 1-month cliff, daily vesting for a year.\n📲 Don't forget to join our social networks to keep up with the news!`,
 ]
 
 const errMsg = [
@@ -59,7 +72,7 @@ const userChain = {}
 const users = {}
 const done = {}
 const emailInput = {}
-
+const checkUser = {}
 async function getTokenUSDPrice (tokenSymbol) {
     const url = `https://api.coingecko.com/api/v3/coins/${tokenSymbol}?localization=true`
     try {
@@ -111,8 +124,7 @@ async function getRubPrice() {
 }
 
 async function save (userData) {
-    console.log(userData)
-    const { address, email, chain, amountToSend, priceUSD, symbol, card } = userData
+    const { address, email, chain, amountToSend, priceUSD, amountUSD, symbol, card } = userData
     const amount = amountToSend
     const mongoData = new user(
         {
@@ -120,12 +132,12 @@ async function save (userData) {
             email,
             chain,
             amount,
+            amountUSD,
             priceUSD,
             symbol,
             card
         }
     )
-    console.log(address, email, chain, amountToSend, priceUSD, symbol, card)
     mongoData.save((err, doc) => {
         if (!err) {
             console.log('success', 'User added successfully!');
@@ -170,6 +182,7 @@ async function main () {
                 const amountToSend = (1/priceUSD * userAmount).toFixed(6)
                 const address = wallets.wallets.btc[0]
                 users[chatId] = {
+                    amountUSD: userAmount,
                     amountToSend,
                     priceUSD,
                     symbol
@@ -182,6 +195,7 @@ async function main () {
                 const amountToSend = parseInt(userAmount * priceUSD * 1.1)
                 const card = wallets.wallets.fiat[0]
                 users[chatId] = {
+                    amountUSD: userAmount,
                     symbol: 'fiat',
                     amountToSend,
                     priceUSD
@@ -194,6 +208,7 @@ async function main () {
                     amountToSend = amountToSend < userAmount ? userAmount : Number(amountToSend).toFixed(2)
                 }
                 users[chatId] = {
+                    amountUSD: userAmount,
                     amountToSend,
                     priceUSD,
                     symbol
@@ -214,6 +229,7 @@ async function main () {
             const message = lang[chatId] ? `Your wallet will be included in Whitelist within 24 hours. Insert your email (just in case)` : `Спасибо! Перевод будет проверен. После проверки, Ваш кошелек появится в Whitelist в течение 24 часов. Оставьте ваш email для связи и решения возможных проблем`
             await bot.sendMessage(chatId, message)
         } else if (emailInput[chatId]) {
+            emailInput[chatId] = false
             const email = msg.text
             const newUserData = {
                 email,
@@ -223,6 +239,22 @@ async function main () {
             const message = lang[chatId] ? `Make sure you subscribed to our Telegram channel so you don't miss any breaking news: https://t.me/metademos_news` : `Убедитесь, что подписаны на наш Telegram канал, чтобы не пропустить срочные новости https://t.me/MetaDemosFun`
             const options = lang[chatId] ? againOptionsEN : againOptionsRU
             await bot.sendMessage(chatId, message, options)
+        } else if (checkUser[chatId]) {
+            checkUser[chatId] = false
+            const usersData = await user.find({})
+            const newUsersData = usersData.filter(item => item.address === msg.text)
+            const usdAmount = newUsersData.reduce((acc, item) => {
+                return acc + item.amountUSD
+            }, 0)
+            if (usdAmount) {
+                const message = lang[chatId] ? `Wallet ${msg.text} is on the white list. Invested amount ${usdAmount} USD` : `Кошелек ${msg.text} в белом списке. Инвестированная сумма ${usdAmount} USD`
+                const options = lang[chatId] ? checkUserOptionsEN : checkUserOptionsRU
+                await bot.sendMessage(chatId, message, options)
+            } else {
+                const message = lang[chatId] ? `Wallet ${msg.text} is not on the white list.` : `Кошелек ${msg.text} не в белом списке`
+                const options = lang[chatId] ? checkUserOptionsEN : checkUserOptionsRU
+                await bot.sendMessage(chatId, message, options)
+            }
         } else {
             console.log(userToken[chatId], userChain[chatId])
             const msg = lang[chatId] ? errMsg[lang[chatId]] : errMsg[1]
@@ -248,7 +280,7 @@ async function main () {
         }
         if (data === 'private_round') {
             const options = lang[chatId] ? privateRoundOptionsEN : privateRoundOptionsRU
-            const message = lang[chatId] ? 'Private round' :'Участвовать в приватном раунде продажи токенов'
+            const message = lang[chatId] ? 'Participate in a private token sale round' :'Участвовать в приватном раунде продажи токенов'
             await bot.sendMessage(chatId, message, options)
         }
         if (data === 'buy') {
@@ -260,19 +292,21 @@ async function main () {
             if (data === 'bitcoin') {
                 userToken[chatId] = 'bitcoin'
                 userChain[chatId] = 'btc'
-                await bot.sendMessage(chatId, amountMsg[lang[chatId]], amountOptions)
+                const options = lang[chatId] ? amountOptionsEN : amountOptionsRU
+                await bot.sendMessage(chatId, amountMsg[lang[chatId]], options)
             } else {
                 userToken[chatId] = data
                 await bot.sendMessage(chatId, chainMsg[lang[chatId]], chainOptions)
             }
         }
         if(Number(data) > 0) {
-            const userAmount = data
+            const userAmount = Number(data)
             if (userChain[chatId] === 'btc') {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
                 const amountToSend = (1/priceUSD * data).toFixed(6)
                 const address = wallets.wallets.btc[0]
                 users[chatId] = {
+                    amountUSD: userAmount,
                     amountToSend,
                     priceUSD,
                     symbol
@@ -286,6 +320,7 @@ async function main () {
                 const amountToSend = parseInt(userAmount * priceUSD * 1.1)
                 const card = wallets.wallets.fiat[0]
                 users[chatId] = {
+                    amountUSD: userAmount,
                     symbol: 'fiat',
                     amountToSend,
                     priceUSD
@@ -298,6 +333,7 @@ async function main () {
                     amountToSend = amountToSend < Number(data) ? data : Number(amountToSend).toFixed(2)
                 }
                 users[chatId] = {
+                    amountUSD: userAmount,
                     amountToSend,
                     priceUSD,
                     symbol
@@ -310,12 +346,26 @@ async function main () {
         }
         if(chains.includes(data)) {
             userChain[chatId] = data
-            await bot.sendMessage(chatId, amountMsg[lang[chatId]], amountOptions)
+            const options = lang[chatId] ? amountOptionsEN : amountOptionsRU
+            await bot.sendMessage(chatId, amountMsg[lang[chatId]], options)
         }
         if (data === 'fiat') {
             userChain[chatId] = data
             userToken[chatId] = data
-            await bot.sendMessage(chatId, amountMsg[lang[chatId]], amountOptions)
+            await bot.sendMessage(chatId, amountMsg[lang[chatId]], amountOptionsRU)
+        }
+        if (data === 'whitelist') {
+            const options = lang[chatId] ? whiteListOptionsEN : whiteListOptionsRU
+            await bot.sendMessage(chatId, 'Whitelist', options)
+        }
+        if (data === 'check_wallet') {
+            checkUser[chatId] = true
+            const message = lang[chatId] ? 'Enter a wallet address that you want to check for the whitelist' : 'Укажите адрес кошелька который нужно проверить на наличие в списке'
+            await bot.sendMessage(chatId, message)
+        }
+        if (data === 'details') {
+            const options = lang[chatId] ? detailsOptionsEN : detailsOptionsRU
+            await bot.sendMessage(chatId, detailsMsg[lang[chatId]], options)
         }
         if (data === 'done') {
             if (userToken[chatId] === 'fiat') {

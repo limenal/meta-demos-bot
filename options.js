@@ -3,9 +3,9 @@ module.exports = {
         reply_markup: JSON.stringify({
             inline_keyboard: [
                 [{text: '💰 Участвовать в приватном раунде', callback_data: 'private_round'}],
-                [{text: '🌐 Сайт', callback_data: 'website'}],
+                [{text: '🌐 Сайт', url:'https://bit.ly/3dbYYAt', callback_data: 'website'}],
                 [{text: '🗒 Whitelist', callback_data: 'whitelist'}],
-                [{text: '❓ Задать вопрос', callback_data: 'support'}]
+                [{text: '❓ Задать вопрос', url: 'https://t.me/metademos_support', callback_data: 'support'}]
             ]
         })
     },
@@ -13,9 +13,9 @@ module.exports = {
         reply_markup: JSON.stringify({
             inline_keyboard: [
                 [{text: '💰 Private Round', callback_data: 'private_round'}],
-                [{text: '🌐 Website', callback_data: 'website'}],
+                [{text: '🌐 Website', url: 'https://bit.ly/3dbYYAt', callback_data: 'website'}],
                 [{text: '🗒 Whitelist', callback_data: 'whitelist'}],
-                [{text: '❓ Support', callback_data: 'support'}]
+                [{text: '❓ Support', url: 'https://t.me/metademos_support', callback_data: 'support'}]
             ]
         })
     },
@@ -23,7 +23,8 @@ module.exports = {
         reply_markup: JSON.stringify({
             inline_keyboard: [
                 [{text: '💳 Купить', callback_data: 'buy'}],
-                [{text: '📖 Подробнее', callback_data: 'details'}]
+                [{text: '📖 Подробнее', callback_data: 'details'}],
+                [{text: '↩️ Назад ', callback_data: 'start_again'}]
             ]
         })
     },
@@ -31,20 +32,51 @@ module.exports = {
         reply_markup: JSON.stringify({
             inline_keyboard: [
                 [{text: '💳 Buy', callback_data: 'buy'}],
-                [{text: '📖 Details', callback_data: 'details'}]
+                [{text: '📖 Details', callback_data: 'details'}],
+                [{text: '↩️ Back ', callback_data: 'start_again'}]
             ]
         })
     },
-    amountOptions: {
+    detailsOptionsRU: {
+        reply_markup: JSON.stringify({
+            inline_keyboard: [
+                [{text: '💳 Купить', callback_data: 'buy'}],
+                [{text: '❓ Задать вопрос', url: 'https://t.me/metademos_support', callback_data: 'support'}],
+                [{text: '↩️ Назад ', callback_data: 'private_round'}]
+            ]
+        })
+    },
+    detailsOptionsEN: {
+        reply_markup: JSON.stringify({
+            inline_keyboard: [
+                [{text: '💳 Buy', callback_data: 'buy'}],
+                [{text: '❓ Support', url: 'https://t.me/metademos_support', callback_data: 'support'}],
+                [{text: '↩️ Back ', callback_data: 'private_round'}]
+            ]
+        })
+    },
+    amountOptionsRU: {
        reply_markup: JSON.stringify({
            inline_keyboard: [
                [{text: '50💲', callback_data: '50'}],
                [{text: '100💲', callback_data: '100'}],
                [{text: '500💲', callback_data: '500'}],
-               [{text: '1000💲', callback_data: '1000'}]
+               [{text: '1000💲', callback_data: '1000'}],
+               [{text: '↩️ Назад ', callback_data: 'buy'}]
            ]
        })
    },
+   amountOptionsEN: {
+    reply_markup: JSON.stringify({
+        inline_keyboard: [
+            [{text: '50💲', callback_data: '50'}],
+            [{text: '100💲', callback_data: '100'}],
+            [{text: '500💲', callback_data: '500'}],
+            [{text: '1000💲', callback_data: '1000'}],
+            [{text: '↩️ Back', callback_data: 'buy'}]
+        ]
+    })
+    },
    tokenOptionsRU: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
@@ -54,7 +86,8 @@ module.exports = {
                 [{text: 'USDC', callback_data: 'usd-coin'}],
                 [{text: 'BUSD', callback_data: 'busd'}],
                 [{text: 'ETH', callback_data: 'ethereum'}],
-                [{text: '💳 Карты Visa / Mastercard / Мир', callback_data: 'fiat'}]
+                [{text: '💳 Карты Visa / Mastercard / Мир', callback_data: 'fiat'}],
+                [{text: '↩️ Назад', callback_data: 'private_round'}]
             ]
         })
     },
@@ -67,6 +100,7 @@ module.exports = {
                 [{text: 'USDC', callback_data: 'usd-coin'}],
                 [{text: 'BUSD', callback_data: 'busd'}],
                 [{text: 'ETH', callback_data: 'ethereum'}],
+                [{text: '↩️ Back', callback_data: 'private_round'}]
             ]
         })
     },
@@ -87,17 +121,53 @@ module.exports = {
             ]
         })
     },
+    whiteListOptionsRU: {
+        reply_markup: JSON.stringify({
+            inline_keyboard: [
+                [{text: 'Проверить кошелек на наличие в вайтлисте', callback_data: 'check_wallet'}],
+                [{text: '↩️ Назад', callback_data: 'start_again'}]
+            ]
+        })
+    },
+    whiteListOptionsEN: {
+        reply_markup: JSON.stringify({
+            inline_keyboard: [
+                [{text: 'Check a wallet for the whitelist', callback_data: 'check_wallet'}],
+                [{text: '↩️ Back', callback_data: 'start_again'}]
+            ]
+        })
+    },
+    checkUserOptionsEN: {
+        reply_markup: JSON.stringify({
+            inline_keyboard: [
+                [{text: '❓ Support', url: 'https://t.me/metademos_support', callback_data: 'support'}],
+                [{text: '↩️ Back', callback_data: 'whitelist'}]
+            ]
+        })
+    },
+    checkUserOptionsRU: {
+        reply_markup: JSON.stringify({
+            inline_keyboard: [
+                [{text: '❓ Помощь', url: 'https://t.me/metademos_support', callback_data: 'support'}],
+                [{text: '↩️ Назад', callback_data: 'whitelist'}]
+            ]
+        })
+    },
     doneOptionsRU: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                [{text: ' Готово ✅ ', callback_data: 'done'}]
+                [{text: '✅ Готово', callback_data: 'done'}],
+                [{text: '🔧 Помощь', url: 'https://t.me/metademos_support', callback_data: 'support'}],
+                [{text: '↩️ Назад', callback_data: 'buy'}]
             ]
         })
     },
     doneOptionsEN: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                [{text: ' Done ✅ ', callback_data: 'done'}]
+                [{text: '✅ Done', callback_data: 'done'}],
+                [{text: '🔧 Support', url: 'https://t.me/metademos_support', callback_data: 'support'}],
+                [{text: '↩️ Back', callback_data: 'buy'}]
             ]
         })
     },
