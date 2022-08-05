@@ -124,8 +124,9 @@ async function getRubPrice() {
 }
 
 async function save (userData) {
-    const { address, email, chain, amountToSend, priceUSD, amountUSD, symbol, card } = userData
+    const { address, chain, amountToSend, priceUSD, amountUSD, symbol, card } = userData
     const amount = amountToSend
+    const email = ''
     const mongoData = new user(
         {
             address,
@@ -147,6 +148,17 @@ async function save (userData) {
     });
 }
 
+async function saveEmail(email, address) {
+    console.log(email)
+    user.updateMany({address: address}, {email: email}, function (err, res) {
+        if(err) {
+            console.log(err)
+        } else {
+            console.log('User updated', res)
+        }
+    })
+}
+
 async function main () {
 
     mongoose
@@ -165,12 +177,10 @@ async function main () {
         const chatId = msg.chat.id
         if (text === '/start') {
             await bot.sendMessage(chatId, `Choose language / Выберите язык`, languageOptions)
-        } else if (Number(msg.text) > 0 && stage[chatId] === 'wallet_input') {
-            stage[chatId] = null
+        } else if (!msg.text.toString().includes('0x') && stage[chatId] === 'wallet_input') {
             const msg = lang[chatId] ? `Invalid address. Enter the address again` : `Введен некорректный адрес кошелька. Введите адрес еще раз`
             await bot.sendMessage(chatId, msg)
         } else if (msg.text.toString().replace(/\s/g, '').length === 16 && stage[chatId] === 'card_input') {
-            stage[chatId] = null
             const card = msg.text
             users[chatId] = {
                 card: card,
@@ -230,6 +240,9 @@ async function main () {
                 address: address,
                 ...users[chatId]
             }
+            const newUserData = users[chatId]
+            await save(newUserData)
+            stage[chatId] = 'email_input'
             emailInput[chatId] = true
             done[chatId] = false
             const message = lang[chatId] ? `Your wallet will be included in Whitelist within 24 hours. Insert your email (just in case)` : `Спасибо! Перевод будет проверен. После проверки, Ваш кошелек появится в Whitelist в течение 24 часов. Оставьте ваш email для связи и решения возможных проблем`
@@ -237,11 +250,11 @@ async function main () {
         } else if (emailInput[chatId]) {
             emailInput[chatId] = false
             const email = msg.text
-            const newUserData = {
+            users[chatId] = {
                 email,
                 ...users[chatId]
             }
-            await save(newUserData)
+            await saveEmail(email, users[chatId].address)
             const message = lang[chatId] ? `Make sure you subscribed to our Telegram channel so you don't miss any breaking news: https://t.me/metademos_news` : `Убедитесь, что подписаны на наш Telegram канал, чтобы не пропустить срочные новости https://t.me/MetaDemosFun`
             const options = lang[chatId] ? againOptionsEN : againOptionsRU
             await bot.sendMessage(chatId, message, options)
@@ -394,7 +407,7 @@ async function main () {
             } else {
                 stage[chatId] = 'wallet_input'
                 done[chatId] = true
-                const msg = lang[chatId] ? `Insert your ${userChain[chatId].toUpperCase()} wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ${userChain[chatId].toUpperCase()} для занесения его в Whitelist и зачисления токенов $MEDOS`
+                const msg = lang[chatId] ? `Insert your ETH wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ETH для занесения его в Whitelist и зачисления токенов $MEDOS`
                 await bot.sendMessage(chatId, msg)    
             }
         }
