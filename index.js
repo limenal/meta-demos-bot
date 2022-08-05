@@ -61,7 +61,7 @@ const errMsg = [
     'Введите число',
     'Enter a number'
 ]
-const tokens = ['ethereum', 'tether', 'usd-coin', 'dai', 'busd', 'bitcoin']
+const tokens = ['ethereum', 'tether', 'usd-coin', 'dai', 'binance-usd', 'bitcoin']
 const chains = ['eth', 'binance', 'tron', 'polygon']
 // async function startDeposit(chatId) {
 // }
@@ -73,6 +73,7 @@ const users = {}
 const done = {}
 const emailInput = {}
 const checkUser = {}
+const stage = {}
 async function getTokenUSDPrice (tokenSymbol) {
     const url = `https://api.coingecko.com/api/v3/coins/${tokenSymbol}?localization=true`
     try {
@@ -92,7 +93,6 @@ async function getTokenUSDPrice (tokenSymbol) {
     } catch (err) {
         console.log(err)
     }
-
 }
 
 async function getRubPrice() {
@@ -165,7 +165,8 @@ async function main () {
         const chatId = msg.chat.id
         if (text === '/start') {
             await bot.sendMessage(chatId, `Choose language / Выберите язык`, languageOptions)
-        } else if (msg.text.toString().replace(/\s/g, '').length === 16) {
+        } else if (msg.text.toString().replace(/\s/g, '').length === 16 && Number(msg.text) > 0 && stage[chatId] === 'input_card') {
+            stage[chatId] = null
             const card = msg.text
             users[chatId] = {
                 card: card,
@@ -255,10 +256,10 @@ async function main () {
                 const options = lang[chatId] ? checkUserOptionsEN : checkUserOptionsRU
                 await bot.sendMessage(chatId, message, options)
             }
-        } else {
-            console.log(userToken[chatId], userChain[chatId])
-            const msg = lang[chatId] ? errMsg[lang[chatId]] : errMsg[1]
-            await bot.sendMessage(chatId, msg, languageOptions)
+        } else if (Number(msg.text) > 0 && stage[chatId] === 'wallet_input') {
+            stage[chatId] = null
+            const msg = lang[chatId] ? `Invalid address. Enter the address again` : `Введен некорректный адрес кошелька. Введите адрес еще раз`
+            await bot.sendMessage(chatId, msg)
         }
     });
 
@@ -270,6 +271,9 @@ async function main () {
             userChain[chatId] = ''
             users[chatId] = {}
             done[chatId] = false
+            emailInput[chatId] = null
+            checkUser[chatId] = null
+            stage[chatId] = null
             const options = lang[chatId] ? mainOptionsEN : mainOptionsRU
             await bot.sendMessage(chatId, helloMsg[lang[chatId]], options)
         }
@@ -356,7 +360,8 @@ async function main () {
         }
         if (data === 'whitelist') {
             const options = lang[chatId] ? whiteListOptionsEN : whiteListOptionsRU
-            await bot.sendMessage(chatId, 'Whitelist', options)
+            const message = lang[chatId] ? `Here you can check if your wallet is whitelisted` : `Тут вы можете проверить находится ли ваш кошелек в вайтлисте`
+            await bot.sendMessage(chatId, message, options)
         }
         if (data === 'check_wallet') {
             checkUser[chatId] = true
@@ -369,8 +374,10 @@ async function main () {
         }
         if (data === 'done') {
             if (userToken[chatId] === 'fiat') {
+                stage[chatId] === 'input_card'
                 await bot.sendMessage(chatId, 'Укажите номер вашей карты для проверки перевода')
             } else {
+                stage[chatId] === 'wallet_input'
                 done[chatId] = true
                 const msg = lang[chatId] ? `Insert your ${userChain[chatId].toUpperCase()} wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ${userChain[chatId].toUpperCase()} для занесения его в Whitelist и зачисления токенов $MEDOS`
                 await bot.sendMessage(chatId, msg)    
