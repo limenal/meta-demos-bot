@@ -163,8 +163,13 @@ async function main () {
     bot.on('message', async (msg) => {
         const text = msg.text
         const chatId = msg.chat.id
+
         if (text === '/start') {
             await bot.sendMessage(chatId, `Choose language / Выберите язык`, languageOptions)
+        } else if (Number(msg.text) > 0 && stage[chatId] === 'wallet_input') {
+            stage[chatId] = null
+            const msg = lang[chatId] ? `Invalid address. Enter the address again` : `Введен некорректный адрес кошелька. Введите адрес еще раз`
+            await bot.sendMessage(chatId, msg)
         } else if (msg.text.toString().replace(/\s/g, '').length === 16 && Number(msg.text) > 0 && stage[chatId] === 'input_card') {
             stage[chatId] = null
             const card = msg.text
@@ -256,10 +261,6 @@ async function main () {
                 const options = lang[chatId] ? checkUserOptionsEN : checkUserOptionsRU
                 await bot.sendMessage(chatId, message, options)
             }
-        } else if (Number(msg.text) > 0 && stage[chatId] === 'wallet_input') {
-            stage[chatId] = null
-            const msg = lang[chatId] ? `Invalid address. Enter the address again` : `Введен некорректный адрес кошелька. Введите адрес еще раз`
-            await bot.sendMessage(chatId, msg)
         }
     });
 
@@ -388,17 +389,16 @@ async function main () {
         }
         if (data === 'done') {
             if (userToken[chatId] === 'fiat') {
-                stage[chatId] === 'input_card'
+                stage[chatId] = 'input_card'
                 await bot.sendMessage(chatId, 'Укажите номер вашей карты для проверки перевода')
             } else {
-                stage[chatId] === 'wallet_input'
+                stage[chatId] = 'wallet_input'
                 done[chatId] = true
                 const msg = lang[chatId] ? `Insert your ${userChain[chatId].toUpperCase()} wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ${userChain[chatId].toUpperCase()} для занесения его в Whitelist и зачисления токенов $MEDOS`
                 await bot.sendMessage(chatId, msg)    
             }
         }
     })
-
 }
 
 main()
