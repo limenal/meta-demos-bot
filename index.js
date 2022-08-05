@@ -163,14 +163,13 @@ async function main () {
     bot.on('message', async (msg) => {
         const text = msg.text
         const chatId = msg.chat.id
-
         if (text === '/start') {
             await bot.sendMessage(chatId, `Choose language / Выберите язык`, languageOptions)
         } else if (Number(msg.text) > 0 && stage[chatId] === 'wallet_input') {
             stage[chatId] = null
             const msg = lang[chatId] ? `Invalid address. Enter the address again` : `Введен некорректный адрес кошелька. Введите адрес еще раз`
             await bot.sendMessage(chatId, msg)
-        } else if (msg.text.toString().replace(/\s/g, '').length === 16 && Number(msg.text) > 0 && stage[chatId] === 'input_card') {
+        } else if (msg.text.toString().replace(/\s/g, '').length === 16 && stage[chatId] === 'card_input') {
             stage[chatId] = null
             const card = msg.text
             users[chatId] = {
@@ -178,6 +177,7 @@ async function main () {
                 ...users[chatId]
             }
             done[chatId] = true
+            stage[chatId] = 'wallet_input'
             const message = `Укажите ваш кошелек для занесения его в Whitelist и зачисления токенов $MEDOS`
             await bot.sendMessage(chatId, message)    
 
@@ -389,7 +389,7 @@ async function main () {
         }
         if (data === 'done') {
             if (userToken[chatId] === 'fiat') {
-                stage[chatId] = 'input_card'
+                stage[chatId] = 'card_input'
                 await bot.sendMessage(chatId, 'Укажите номер вашей карты для проверки перевода')
             } else {
                 stage[chatId] = 'wallet_input'
