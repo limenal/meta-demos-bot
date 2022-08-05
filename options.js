@@ -84,7 +84,7 @@ module.exports = {
                 [{text: 'USDT', callback_data: 'tether'}],
                 [{text: 'DAI', callback_data: 'dai'}],
                 [{text: 'USDC', callback_data: 'usd-coin'}],
-                [{text: 'BUSD', callback_data: 'busd'}],
+                [{text: 'BUSD', callback_data: 'binance-usd'}],
                 [{text: 'ETH', callback_data: 'ethereum'}],
                 [{text: '💳 Карты Visa / Mastercard / Мир', callback_data: 'fiat'}],
                 [{text: '↩️ Назад', callback_data: 'private_round'}]
@@ -98,7 +98,7 @@ module.exports = {
                 [{text: 'USDT', callback_data: 'tether'}],
                 [{text: 'DAI', callback_data: 'dai'}],
                 [{text: 'USDC', callback_data: 'usd-coin'}],
-                [{text: 'BUSD', callback_data: 'busd'}],
+                [{text: 'BUSD', callback_data: 'binance-usd'}],
                 [{text: 'ETH', callback_data: 'ethereum'}],
                 [{text: '↩️ Back', callback_data: 'private_round'}]
             ]
