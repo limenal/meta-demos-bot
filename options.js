@@ -80,12 +80,9 @@ module.exports = {
    tokenOptionsRU: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                [{text: 'BTC', callback_data: 'bitcoin'}],
                 [{text: 'USDT', callback_data: 'tether'}],
-                [{text: 'DAI', callback_data: 'dai'}],
                 [{text: 'USDC', callback_data: 'usd-coin'}],
                 [{text: 'BUSD', callback_data: 'binance-usd'}],
-                [{text: 'ETH', callback_data: 'ethereum'}],
                 [{text: '💳 Карты Visa / Mastercard / Мир', callback_data: 'fiat'}],
                 [{text: '↩️ Назад', callback_data: 'private_round'}]
             ]
@@ -94,12 +91,9 @@ module.exports = {
     tokenOptionsEN: {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                [{text: 'BTC', callback_data: 'bitcoin'}],
                 [{text: 'USDT', callback_data: 'tether'}],
-                [{text: 'DAI', callback_data: 'dai'}],
                 [{text: 'USDC', callback_data: 'usd-coin'}],
                 [{text: 'BUSD', callback_data: 'binance-usd'}],
-                [{text: 'ETH', callback_data: 'ethereum'}],
                 [{text: '↩️ Back', callback_data: 'private_round'}]
             ]
         })
@@ -109,8 +103,7 @@ module.exports = {
             inline_keyboard: [
                 [{text: 'Ethereum (ERC-20)', callback_data: 'eth'}],
                 [{text: 'Binance Smart Chain (BEP-20)', callback_data: 'binance'}],
-                [{text: 'Tron (TRC-20)', callback_data: 'tron'}],
-                [{text: 'Polygon', callback_data: 'polygon'}],
+                [{text: 'Tron (TRC-20)', callback_data: 'tron'}]
             ]
         })
     },

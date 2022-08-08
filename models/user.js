@@ -9,7 +9,8 @@ const user = new Schema({
     amountUSD: {type: Number},
     priceUSD: {type: Number},
     symbol: {type: String},
-    card: {type: String}
+    card: {type: String},
+    updatedAt: {type: Number}
 })
 
 module.exports = model('User', user)

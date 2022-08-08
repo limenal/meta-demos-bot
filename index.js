@@ -136,7 +136,8 @@ async function save (userData) {
             amountUSD,
             priceUSD,
             symbol,
-            card
+            card,
+            updatedAt: Date.now()
         }
     )
     mongoData.save((err, doc) => {
@@ -150,7 +151,7 @@ async function save (userData) {
 
 async function saveEmail(email, address) {
     console.log(email)
-    user.updateMany({address: address}, {email: email}, function (err, res) {
+    user.updateMany({address: address}, {email: email, updatedAt: Date.now()}, function (err, res) {
         if(err) {
             console.log(err)
         } else {
@@ -171,7 +172,7 @@ async function main () {
     bot.setMyCommands([
         {command: '/start', description: 'Main function'},
     ])
-
+    
     bot.on('message', async (msg) => {
         const text = msg.text
         const chatId = msg.chat.id
