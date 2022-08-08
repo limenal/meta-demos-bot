@@ -1,10 +1,7 @@
 module.exports = {
     wallets: {
-        btc: ['1BoatSLRHtKNngkdXEeobR76b53LETtpyT'],
-        eth: ['0xf15024f5636Cd7983Cd05133BFb8fBa269c75eD3'],
-        tron: ['TJLLVgCZPstsRCQK4Ro3rKmTr69unNbox2'],
-        binance: ['0xf15024f5636Cd7983Cd05133BFb8fBa269c75eD3'],
-        polygon: ['0xf15024f5636Cd7983Cd05133BFb8fBa269c75eD3'],
-        fiat: ['1111 2222 3333 4444']    
+        eth: ['0x024c973971befe34749ae493b208959e007f763c'],
+        tron: ['TLAEgZtxjstE3eYEiLyTw3N3iBLh4dpSFk'],
+        binance: ['0xf620bb19da8afbd4aa33f400dbef89bf215481af'],
     }
 }
