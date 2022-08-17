@@ -74,25 +74,9 @@ const done = {}
 const emailInput = {}
 const checkUser = {}
 const stage = {}
+const tokenAddresses = ['']
 async function getTokenUSDPrice (tokenSymbol) {
-    const url = `https://api.coingecko.com/api/v3/coins/${tokenSymbol}?localization=true`
-    try {
-        return new Promise((resolve, reject) => {
-            request({
-                uri: url,
-                method: 'GET',
-                encoding: 'utf-8'
-            }, function (error, response, body) {
-                const json = JSON.parse(body)
-                const price = json.market_data.current_price.usd
-                const symbol = json.symbol
-                const result = [price, symbol]
-                resolve(result)
-            })
-        })
-    } catch (err) {
-        console.log(err)
-    }
+    return [1.02, tokenSymbol]
 }
 
 async function getRubPrice() {
