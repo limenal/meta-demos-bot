@@ -392,7 +392,7 @@ async function main () {
             } else {
                 stage[chatId] = 'wallet_input'
                 done[chatId] = true
-                const msg = lang[chatId] ? `Insert your ETH wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ETH для занесения его в Whitelist и зачисления токенов $MEDOS`
+                const msg = lang[chatId] ? `Insert your BSC wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ETH для занесения его в Whitelist и зачисления токенов $MEDOS`
                 await bot.sendMessage(chatId, msg)    
             }
         }
