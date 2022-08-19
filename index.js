@@ -62,6 +62,7 @@ const errMsg = [
     'Enter a number'
 ]
 const tokens = ['ethereum', 'tether', 'usd-coin', 'dai', 'binance-usd', 'bitcoin']
+const tokenSymbols = {'tether': 'USDT', 'usd-coin': 'USDC', 'dai': 'DAI', 'binance-usd': 'BUSD'}
 const chains = ['eth', 'binance', 'tron', 'polygon']
 // async function startDeposit(chatId) {
 // }
@@ -162,6 +163,28 @@ async function main () {
         const chatId = msg.chat.id
         if (text === '/start') {
             await bot.sendMessage(chatId, `Choose language / Выберите язык`, languageOptions)
+        } else if (msg.text && stage[chatId] === 'hash_input') {
+            const hash = msg.text
+            users[chatId] = {
+                hash: hash,
+                ...users[chatId]
+            }
+            const usersData = await user.find({})
+            const newUsersData = usersData.filter(item => item.address === users[chatId].address)
+            const lastUser = newUsersData.reduce((acc, curr) => acc.updatedAt > curr.updatedAt ? acc : curr);
+            user.updateOne({_id: lastUser._id}, {hash: hash, updatedAt: Date.now()}, function (err, res) {
+                if(err) {
+                    console.log(err)
+                } else {
+                    console.log('User updated', res)
+                }
+            })
+            stage[chatId] = null
+            emailInput[chatId] = true
+            done[chatId] = false
+            const message = lang[chatId] ? `Your wallet will be included in Whitelist within 24 hours. Insert your email (just in case)` : `Спасибо! Перевод будет проверен. После проверки, Ваш кошелек появится в Whitelist в течение 24 часов. Оставьте ваш email для связи и решения возможных проблем`
+
+            await bot.sendMessage(chatId, message)
         } else if (!msg.text.toString().includes('0x') && stage[chatId] === 'wallet_input') {
             const msg = lang[chatId] ? `Invalid address. Enter the address again` : `Введен некорректный адрес кошелька. Введите адрес еще раз`
             await bot.sendMessage(chatId, msg)
@@ -173,7 +196,7 @@ async function main () {
             }
             done[chatId] = true
             stage[chatId] = 'wallet_input'
-            const message = `Укажите ваш кошелек для занесения его в Whitelist и зачисления токенов $MEDOS`
+            const message = `Укажите ваш кошелек в сети BSC для занесения его в Whitelist и зачисления токенов $MEDOS`
             await bot.sendMessage(chatId, message)    
 
         } else if (Number(msg.text) > 0 && userToken[chatId] && userChain[chatId] && !msg.text.toString().includes('0x')) {
@@ -188,7 +211,7 @@ async function main () {
                     priceUSD,
                     symbol
                 }
-                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${symbol} on address ${address} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${address}, затем кликните "Готово"`
+                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${tokenSymbols[symbol]} on address ${address} then click "Done"` : `Переведите ${Number(amountToSend)} ${tokenSymbols[symbol]} на данный кошелек: ${address}, затем кликните "Готово"`
                 const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
                 await bot.sendMessage(chatId, message, options)
             } else if (userToken[chatId] === 'fiat') {
@@ -227,10 +250,8 @@ async function main () {
             }
             const newUserData = users[chatId]
             await save(newUserData)
-            stage[chatId] = 'email_input'
-            emailInput[chatId] = true
-            done[chatId] = false
-            const message = lang[chatId] ? `Your wallet will be included in Whitelist within 24 hours. Insert your email (just in case)` : `Спасибо! Перевод будет проверен. После проверки, Ваш кошелек появится в Whitelist в течение 24 часов. Оставьте ваш email для связи и решения возможных проблем`
+            stage[chatId] = 'hash_input'
+            const message = lang[chatId] ? `Enter the transaction hash to confirm the transfer` : `Введите хэш транзакции для подтверждения перевода`
             await bot.sendMessage(chatId, message)
         } else if (emailInput[chatId]) {
             emailInput[chatId] = false
@@ -276,12 +297,12 @@ async function main () {
             const options = lang[chatId] ? mainOptionsEN : mainOptionsRU
             await bot.sendMessage(chatId, helloMsg[lang[chatId]], options)
         }
-        if (data === 'ru' || data === 'en') {
+        else if (data === 'ru' || data === 'en') {
             lang[chatId] = data === 'ru' ? 0 : 1
             const options = lang[chatId] ? mainOptionsEN : mainOptionsRU
             await bot.sendMessage(chatId, helloMsg[lang[chatId]], options)
         }
-        if (data === 'private_round') {
+        else if (data === 'private_round') {
             userToken[chatId] = ''
             userChain[chatId] = ''
             users[chatId] = {}
@@ -293,7 +314,7 @@ async function main () {
             const message = lang[chatId] ? 'Participate in a private token sale round' :'Участвовать в приватном раунде продажи токенов'
             await bot.sendMessage(chatId, message, options)
         }
-        if (data === 'buy') {
+        else if (data === 'buy') {
             userToken[chatId] = ''
             userChain[chatId] = ''
             users[chatId] = {}
@@ -305,7 +326,7 @@ async function main () {
             await bot.sendMessage(chatId, tokenMsg[lang[chatId]], options)
         }
 
-        if (tokens.includes(data)) {
+        else if (lang[chatId] && tokens.includes(data)) {
             if (data === 'bitcoin') {
                 userToken[chatId] = 'bitcoin'
                 userChain[chatId] = 'btc'
@@ -316,7 +337,7 @@ async function main () {
                 await bot.sendMessage(chatId, chainMsg[lang[chatId]], chainOptions)
             }
         }
-        if(Number(data) > 0) {
+        else if(lang[chatId] && Number(data) > 0) {
             const userAmount = Number(data)
             if (userChain[chatId] === 'btc') {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
@@ -355,44 +376,44 @@ async function main () {
                     priceUSD,
                     symbol
                 }
-                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${symbol} on address ${wallets.wallets[userChain[chatId]][0]} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${wallets.wallets[userChain[chatId]][0]}, затем кликните "Готово"`
+                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${tokenSymbols[symbol]} on address ${wallets.wallets[userChain[chatId]][0]} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${wallets.wallets[userChain[chatId]][0]}, затем кликните "Готово"`
                 const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
 
                 await bot.sendMessage(chatId, message, options)
             }
         }
-        if(chains.includes(data)) {
+        else if(chains.includes(data)) {
             userChain[chatId] = data
             const options = lang[chatId] ? amountOptionsEN : amountOptionsRU
             await bot.sendMessage(chatId, amountMsg[lang[chatId]], options)
         }
-        if (data === 'fiat') {
+        else if (data === 'fiat') {
             userChain[chatId] = data
             userToken[chatId] = data
             await bot.sendMessage(chatId, amountMsg[lang[chatId]], amountOptionsRU)
         }
-        if (data === 'whitelist') {
+        else if (data === 'whitelist') {
             const options = lang[chatId] ? whiteListOptionsEN : whiteListOptionsRU
             const message = lang[chatId] ? `Here you can check if your wallet is whitelisted` : `Тут вы можете проверить находится ли ваш кошелек в вайтлисте`
             await bot.sendMessage(chatId, message, options)
         }
-        if (data === 'check_wallet') {
+        else if (data === 'check_wallet') {
             checkUser[chatId] = true
             const message = lang[chatId] ? 'Enter a wallet address that you want to check for the whitelist' : 'Укажите адрес кошелька который нужно проверить на наличие в списке'
             await bot.sendMessage(chatId, message)
         }
-        if (data === 'details') {
+        else if (data === 'details') {
             const options = lang[chatId] ? detailsOptionsEN : detailsOptionsRU
             await bot.sendMessage(chatId, detailsMsg[lang[chatId]], options)
         }
-        if (data === 'done') {
+        else if (data === 'done') {
             if (userToken[chatId] === 'fiat') {
                 stage[chatId] = 'card_input'
                 await bot.sendMessage(chatId, 'Укажите номер вашей карты для проверки перевода')
             } else {
                 stage[chatId] = 'wallet_input'
                 done[chatId] = true
-                const msg = lang[chatId] ? `Insert your BSC wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети ETH для занесения его в Whitelist и зачисления токенов $MEDOS`
+                const msg = lang[chatId] ? `Insert your BSC wallet address to be added to the Whitelist and receive $MEDOS tokens` : `Укажите ваш кошелек в сети BSC для занесения его в Whitelist и зачисления токенов $MEDOS`
                 await bot.sendMessage(chatId, msg)    
             }
         }
