@@ -194,8 +194,8 @@ async function main () {
                 card: card,
                 ...users[chatId]
             }
-            done[chatId] = true
             stage[chatId] = 'wallet_input'
+            done[chatId] = true
             const message = `Укажите ваш кошелек в сети BSC для занесения его в Whitelist и зачисления токенов $MEDOS`
             await bot.sendMessage(chatId, message)    
 
@@ -250,9 +250,17 @@ async function main () {
             }
             const newUserData = users[chatId]
             await save(newUserData)
-            stage[chatId] = 'hash_input'
-            const message = lang[chatId] ? `Enter the transaction hash to confirm the transfer` : `Введите хэш транзакции для подтверждения перевода`
-            await bot.sendMessage(chatId, message)
+            if (users[chatId].symbol !== 'fiat') {
+                stage[chatId] = 'hash_input'
+                const message = lang[chatId] ? `Enter the transaction hash to confirm the transfer` : `Введите хэш транзакции для подтверждения перевода`
+                await bot.sendMessage(chatId, message)    
+            } else {
+                stage[chatId] = null
+                emailInput[chatId] = true
+                done[chatId] = false
+                const message = lang[chatId] ? `Your wallet will be included in Whitelist within 24 hours. Insert your email (just in case)` : `Спасибо! Перевод будет проверен. После проверки, Ваш кошелек появится в Whitelist в течение 24 часов. Оставьте ваш email для связи и решения возможных проблем`
+                await bot.sendMessage(chatId, message)    
+            }
         } else if (emailInput[chatId]) {
             emailInput[chatId] = false
             const email = msg.text
@@ -326,7 +334,7 @@ async function main () {
             await bot.sendMessage(chatId, tokenMsg[lang[chatId]], options)
         }
 
-        else if (lang[chatId] && tokens.includes(data)) {
+        else if (tokens.includes(data)) {
             if (data === 'bitcoin') {
                 userToken[chatId] = 'bitcoin'
                 userChain[chatId] = 'btc'
@@ -337,7 +345,7 @@ async function main () {
                 await bot.sendMessage(chatId, chainMsg[lang[chatId]], chainOptions)
             }
         }
-        else if(lang[chatId] && Number(data) > 0) {
+        else if(Number(data) > 0) {
             const userAmount = Number(data)
             if (userChain[chatId] === 'btc') {
                 const [priceUSD, symbol] = await getTokenUSDPrice(userToken[chatId])
