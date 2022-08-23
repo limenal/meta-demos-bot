@@ -384,7 +384,7 @@ async function main () {
                     priceUSD,
                     symbol
                 }
-                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${tokenSymbols[symbol]} on address ${wallets.wallets[userChain[chatId]][0]} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${wallets.wallets[userChain[chatId]][0]}, затем кликните "Готово"`
+                const message = lang[chatId] ? `Send ${Number(amountToSend)} ${tokenSymbols[symbol]} on address ${wallets.wallets[userChain[chatId]][0]} then click "Done"` : `Переведите ${Number(amountToSend)} ${tokenSymbols[symbol]} на данный кошелек: ${wallets.wallets[userChain[chatId]][0]}, затем кликните "Готово"`
                 const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
 
                 await bot.sendMessage(chatId, message, options)
