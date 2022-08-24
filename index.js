@@ -289,6 +289,7 @@ async function main () {
                 const message = lang[chatId] ? `Enter the transaction hash to confirm the transfer` : `Введите хэш транзакции для подтверждения перевода`
                 await bot.sendMessage(chatId, message)    
             } else {
+                await save(users[chatId], msg.from.username)
                 stage[chatId] = null
                 emailInput[chatId] = true
                 done[chatId] = false
