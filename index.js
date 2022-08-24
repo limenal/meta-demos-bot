@@ -108,41 +108,68 @@ async function getRubPrice() {
     })
 }
 
-async function save (userData) {
-    const { address, chain, amountToSend, priceUSD, amountUSD, symbol, card } = userData
+async function save (userData, username) {
+    const { address, chain, amountToSend, priceUSD, amountUSD, symbol, card, hash } = userData
     const amount = amountToSend
     const email = ''
-    const mongoData = new user(
-        {
-            address,
-            email,
-            chain,
-            amount,
-            amountUSD,
-            priceUSD,
-            symbol,
-            card,
-            updatedAt: Date.now()
-        }
-    )
-    mongoData.save((err, doc) => {
-        if (!err) {
-            console.log('success', 'User added successfully!');
-        } else {
-            console.log('Error during record insertion : ' + err);
-        }
-    });
-}
-
-async function saveEmail(email, address) {
-    console.log(email)
-    user.updateMany({address: address}, {email: email, updatedAt: Date.now()}, function (err, res) {
+    const depositData = 
+    {
+        address,
+        hash,
+        email,
+        chain,
+        amount,
+        amountUSD,
+        priceUSD,
+        symbol,
+        card,
+    }
+    console.log('Trying to add deposit', username, depositData)
+    user.findOneAndUpdate({username: username}, {$push: {deposits: depositData}, updatedAt: Date.now()}, function (err, res) {
         if(err) {
             console.log(err)
         } else {
             console.log('User updated', res)
         }
     })
+    // user.updateMany({username: users[chatId].username}, mongoData, function (err, res) {
+    //     if(err) {
+    //         console.log(err)
+    //     } else {
+    //         console.log('User updated', res)
+    //     }
+    // })
+
+}
+
+async function saveEmail(email, username) {
+    console.log(email)
+
+    user.updateOne(
+        {username: username}, 
+        { "$set": { "deposits.$[].email": email } }, 
+        function (err, res) {
+            if(err) {
+                console.log(err)
+            } else {
+                console.log('User updated', res)
+            }
+    })
+}
+
+async function initUser(username) {
+    const mongoData = new user(
+        {
+            username,
+            deposits: [],
+            updatedAt: Date.now()
+        }
+    )
+    const usersData = await user.find({})
+    const userIndex = usersData.findIndex(item => item.username === username)
+    if (userIndex === -1) {
+        mongoData.save()
+    } 
 }
 
 async function main () {
@@ -162,6 +189,12 @@ async function main () {
         const text = msg.text
         const chatId = msg.chat.id
         if (text === '/start') {
+            await initUser(msg.from.username)
+            users[chatId] = {
+                username: msg.from.username
+            }
+            const a = await user.find({username: msg.from.username})
+            console.log(a)
             await bot.sendMessage(chatId, `Choose language / Выберите язык`, languageOptions)
         } else if (msg.text && stage[chatId] === 'hash_input') {
             const hash = msg.text
@@ -169,16 +202,16 @@ async function main () {
                 hash: hash,
                 ...users[chatId]
             }
-            const usersData = await user.find({})
-            const newUsersData = usersData.filter(item => item.address === users[chatId].address)
-            const lastUser = newUsersData.reduce((acc, curr) => acc.updatedAt > curr.updatedAt ? acc : curr);
-            user.updateOne({_id: lastUser._id}, {hash: hash, updatedAt: Date.now()}, function (err, res) {
-                if(err) {
-                    console.log(err)
-                } else {
-                    console.log('User updated', res)
-                }
-            })
+            const newUserData = users[chatId]
+            await save(newUserData, msg.from.username)
+
+            // user.updateOne({username: msg.from.username}, {hash: hash, updatedAt: Date.now()}, function (err, res) {
+            //     if(err) {
+            //         console.log(err)
+            //     } else {
+            //         console.log('User updated', res)
+            //     }
+            // })
             stage[chatId] = null
             emailInput[chatId] = true
             done[chatId] = false
@@ -209,7 +242,8 @@ async function main () {
                     amountUSD: userAmount,
                     amountToSend,
                     priceUSD,
-                    symbol
+                    symbol,
+                    ...users[chatId]
                 }
                 const message = lang[chatId] ? `Send ${Number(amountToSend)} ${tokenSymbols[symbol]} on address ${address} then click "Done"` : `Переведите ${Number(amountToSend)} ${tokenSymbols[symbol]} на данный кошелек: ${address}, затем кликните "Готово"`
                 const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
@@ -222,7 +256,8 @@ async function main () {
                     amountUSD: userAmount,
                     symbol: 'fiat',
                     amountToSend,
-                    priceUSD
+                    priceUSD,
+                    ...users[chatId]
                 }
                 await bot.sendMessage(chatId, `Отправьте ${amountToSend} рублей на карту ${card} затем нажмите "Готово"`, doneOptionsRU)
             } else {
@@ -235,7 +270,8 @@ async function main () {
                     amountUSD: userAmount,
                     amountToSend,
                     priceUSD,
-                    symbol
+                    symbol,
+                    ...users[chatId]
                 }
                 const message = lang[chatId] ? `Send ${Number(amountToSend)} ${symbol} on address ${wallets.wallets[userChain[chatId]][0]} then click "Done"` : `Переведите ${Number(amountToSend)} ${symbol} на данный кошелек: ${wallets.wallets[userChain[chatId]][0]}, затем кликните "Готово"`
                 const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
@@ -248,8 +284,6 @@ async function main () {
                 address: address,
                 ...users[chatId]
             }
-            const newUserData = users[chatId]
-            await save(newUserData)
             if (users[chatId].symbol !== 'fiat') {
                 stage[chatId] = 'hash_input'
                 const message = lang[chatId] ? `Enter the transaction hash to confirm the transfer` : `Введите хэш транзакции для подтверждения перевода`
@@ -268,7 +302,7 @@ async function main () {
                 email,
                 ...users[chatId]
             }
-            await saveEmail(email, users[chatId].address)
+            await saveEmail(email, msg.from.username)
             const message = lang[chatId] ? `Make sure you subscribed to our Telegram channel so you don't miss any breaking news: https://t.me/metademos_news` : `Убедитесь, что подписаны на наш Telegram канал, чтобы не пропустить срочные новости https://t.me/MetaDemosFun`
             const options = lang[chatId] ? againOptionsEN : againOptionsRU
             await bot.sendMessage(chatId, message, options)
@@ -369,7 +403,8 @@ async function main () {
                     amountUSD: userAmount,
                     symbol: 'fiat',
                     amountToSend,
-                    priceUSD
+                    priceUSD,
+                    ...users[chatId]
                 }
                 await bot.sendMessage(chatId, `Отправьте ${amountToSend} рублей на карту ${card} затем нажмите "Готово"`, doneOptionsRU)
             } else {
@@ -382,7 +417,8 @@ async function main () {
                     amountUSD: userAmount,
                     amountToSend,
                     priceUSD,
-                    symbol
+                    symbol,
+                    ...users[chatId]
                 }
                 const message = lang[chatId] ? `Send ${Number(amountToSend)} ${tokenSymbols[symbol]} on address ${wallets.wallets[userChain[chatId]][0]} then click "Done"` : `Переведите ${Number(amountToSend)} ${tokenSymbols[symbol]} на данный кошелек: ${wallets.wallets[userChain[chatId]][0]}, затем кликните "Готово"`
                 const options = lang[chatId] ? doneOptionsEN : doneOptionsRU
